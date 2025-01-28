@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId, Admin } = require('mongodb');
 require('dotenv').config();
 
-const verifyToken = require('./verifyToken'); 
+const verifyToken = require('./verifyToken');
 const multer = require('multer');
 
 
@@ -115,42 +115,42 @@ async function run() {
 
         // update user profile
 
-        // Route to handle user update
-app.put('/user', upload.single('image'), async (req, res) => {
-    const email = req.query.email;
-    const updatedData = req.body;
-    
-    // If there's a file uploaded, handle the photo update
-    if (req.file) {
-        updatedData.photo = `/uploads/${req.file.filename}`;  // Path to uploaded photo
-        updatedData.photoURL = updatedData.photo;  // Same URL for photoURL field
-    }
+        
+        app.put('/user', upload.single('image'), async (req, res) => {
+            const email = req.query.email;
+            const updatedData = req.body;
 
-    // Filter only allowed fields
-    const allowedFields = ['photo', 'photoURL'];
-    const filteredData = Object.keys(updatedData)
-        .filter(key => allowedFields.includes(key))
-        .reduce((obj, key) => {
-            obj[key] = updatedData[key];
-            return obj;
-        }, {});
+           
+            if (req.file) {
+                updatedData.photo = `/uploads/${req.file.filename}`;  
+                updatedData.photoURL = updatedData.photo;  
+            }
 
-    try {
-        const result = await UserCollection.updateOne(
-            { email },
-            { $set: filteredData }
-        );
+          
+            const allowedFields = ['photo', 'photoURL'];
+            const filteredData = Object.keys(updatedData)
+                .filter(key => allowedFields.includes(key))
+                .reduce((obj, key) => {
+                    obj[key] = updatedData[key];
+                    return obj;
+                }, {});
 
-        if (result.modifiedCount > 0) {
-            res.send({ message: 'User updated successfully' });
-        } else {
-            res.status(400).send({ message: 'No changes made or user not found' });
-        }
-    } catch (error) {
-        console.error("Error updating user:", error);
-        res.status(500).send({ message: 'An error occurred while updating the profile' });
-    }
-});
+            try {
+                const result = await UserCollection.updateOne(
+                    { email },
+                    { $set: filteredData }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ message: 'User updated successfully' });
+                } else {
+                    res.status(400).send({ message: 'No changes made or user not found' });
+                }
+            } catch (error) {
+                console.error("Error updating user:", error);
+                res.status(500).send({ message: 'An error occurred while updating the profile' });
+            }
+        });
 
 
 
@@ -212,7 +212,7 @@ app.put('/user', upload.single('image'), async (req, res) => {
 
         // id wise parcel data update
 
-        
+
         app.patch('/parcels/:id', async (req, res) => {
             const { id } = req.params;
             const { status, deliveryman, deliverymanId, deliverymanemail, appxdeliveryDate } = req.body;
@@ -253,7 +253,7 @@ app.put('/user', upload.single('image'), async (req, res) => {
             const id = req.params.id;
             let { reviewStar, reviewComment, reviewDate } = req.body;
 
-        
+
             reviewStar = Number(reviewStar);
 
             if (isNaN(reviewStar) || reviewStar < 1 || reviewStar > 5) {
@@ -398,6 +398,7 @@ app.put('/user', upload.single('image'), async (req, res) => {
             });
 
             // update eatch user with totalprice field
+
             const updateUsercollection = userwithparcel.map(async (user) => {
 
                 await UserCollection.updateOne(
@@ -412,7 +413,7 @@ app.put('/user', upload.single('image'), async (req, res) => {
             });
 
 
-            // Wait for all update operations to complete
+            
             await Promise.all(updateUsercollection);
 
             // Respond with the updated user data
