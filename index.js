@@ -8,6 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId, Admin } = require('mongodb');
 require('dotenv').config();
 
 const verifyToken = require('./verifyToken'); 
+const multer = require('multer');
 
 
 
@@ -18,6 +19,8 @@ const verifyToken = require('./verifyToken');
 app.use(cors());
 
 app.use(express.json());
+
+const upload = multer({ dest: 'uploads/' });
 
 
 
@@ -112,25 +115,42 @@ async function run() {
 
         // update user profile
 
-        app.put('/user', async (req, res) => {
-            const email = req.query.email;
-            const updatedData = req.body;
+        // Route to handle user update
+app.put('/user', upload.single('image'), async (req, res) => {
+    const email = req.query.email;
+    const updatedData = req.body;
+    
+    // If there's a file uploaded, handle the photo update
+    if (req.file) {
+        updatedData.photo = `/uploads/${req.file.filename}`;  // Path to uploaded photo
+        updatedData.photoURL = updatedData.photo;  // Same URL for photoURL field
+    }
 
-            const allowedFields = ['photoURL'];
-            const filteredData = Object.keys(updatedData)
-                .filter(key => allowedFields.includes(key))
-                .reduce((obj, key) => {
-                    obj[key] = updatedData[key];
-                    return obj;
-                }, {});
+    // Filter only allowed fields
+    const allowedFields = ['photo', 'photoURL'];
+    const filteredData = Object.keys(updatedData)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => {
+            obj[key] = updatedData[key];
+            return obj;
+        }, {});
 
-            const result = await UserCollection.updateOne(
-                { email },
-                { $set: filteredData }
-            );
-            res.send(result);
+    try {
+        const result = await UserCollection.updateOne(
+            { email },
+            { $set: filteredData }
+        );
 
-        });
+        if (result.modifiedCount > 0) {
+            res.send({ message: 'User updated successfully' });
+        } else {
+            res.status(400).send({ message: 'No changes made or user not found' });
+        }
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).send({ message: 'An error occurred while updating the profile' });
+    }
+});
 
 
 
